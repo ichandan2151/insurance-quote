@@ -54,7 +54,12 @@ function EligibilityContent() {
         .eq('id', quoteId);
     }
 
-    router.push('/error-page');
+    const errorParams = new URLSearchParams({
+      ...(quoteId ? { quoteId } : {}),
+      firstName,
+      lastName,
+    });
+    router.push(`/error-page?${errorParams.toString()}`);
   };
 
   return (

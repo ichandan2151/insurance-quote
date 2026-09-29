@@ -1,10 +1,35 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Typography, Paper, Button } from '@mui/material';
+import { supabase } from '@/lib/supabase';
 
-export default function ErrorPage() {
+function ErrorPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const quoteId = searchParams.get('quoteId');
+  const firstName = searchParams.get('firstName') || '';
+  const lastName = searchParams.get('lastName') || '';
+
+  const handleBackToEligibility = () => {
+    router.back();
+  };
+
+  const handleCloseApplication = async () => {
+    // Update quote status to declined
+    if (quoteId) {
+      await supabase
+        .from('quote_submissions')
+        .update({
+          status: 'declined',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', quoteId);
+    }
+    router.push('/');
+  };
 
   return (
     <Box
@@ -39,36 +64,23 @@ export default function ErrorPage() {
 
         {/* Heading */}
         <Typography
-          sx={{
-            fontSize: '2.2rem',
-            fontWeight: 400,
-            color: '#333',
-            mb: 2,
-            lineHeight: 1.3,
-          }}
+          sx={{ fontSize: '2.2rem', fontWeight: 400, color: '#333', mb: 2, lineHeight: 1.3 }}
         >
           Something went wrong on our side
         </Typography>
 
         {/* Description */}
         <Typography
-          sx={{
-            fontSize: '1rem',
-            color: '#666',
-            mb: 5,
-            maxWidth: 500,
-            mx: 'auto',
-            lineHeight: 1.6,
-          }}
+          sx={{ fontSize: '1rem', color: '#666', mb: 5, maxWidth: 500, mx: 'auto', lineHeight: 1.6 }}
         >
-          Nothing has been submitted and your client&apos;s details are unchanged. Go back and try again.
+          Nothing has been submitted and {firstName ? `${firstName} ${lastName}'s` : "your client's"} details are unchanged. Go back and try again.
         </Typography>
 
         {/* Buttons */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
           <Button
             variant="contained"
-            onClick={() => router.push('/eligibility')}
+            onClick={handleBackToEligibility}
             sx={{
               backgroundColor: '#1a3c6e',
               textTransform: 'none',
@@ -85,7 +97,7 @@ export default function ErrorPage() {
           </Button>
           <Button
             variant="outlined"
-            onClick={() => router.push('/')}
+            onClick={handleCloseApplication}
             sx={{
               borderColor: '#1a3c6e',
               color: '#1a3c6e',
@@ -104,5 +116,13 @@ export default function ErrorPage() {
         </Box>
       </Paper>
     </Box>
+  );
+}
+
+export default function ErrorPage() {
+  return (
+    <Suspense fallback={<Box sx={{ minHeight: '100vh', backgroundColor: '#6BA4E0' }} />}>
+      <ErrorPageContent />
+    </Suspense>
   );
 }
