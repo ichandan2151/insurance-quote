@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Typography, Divider, Button, Paper } from '@mui/material';
+import { supabase } from '@/lib/supabase';
 import QuoteBuilder from '@/components/QuoteBuilder';
 import PolicyTotal from '@/components/PolicyTotal';
 import OptionalRiders from '@/components/OptionalRiders';
-import { calculatePremium, getPremiumForRateClass, getRateClasses } from '@/utils/premiumCalculator';
+import { calculatePremium, getPremiumForRateClass, getRateClasses, getAnnualPremium } from '@/utils/premiumCalculator';
 
 const INCLUDED_RIDERS = ['Accelerated Death Benefit Rider for Terminal Illness'];
 
@@ -16,6 +17,7 @@ function QuotePageContent() {
   const firstName = searchParams.get('firstName') || '';
   const lastName = searchParams.get('lastName') || '';
   const isTobacco = searchParams.get('tobacco') === 'yes';
+  const quoteId = searchParams.get('quoteId') || null;
 
   const initialCoverage = 35000;
   const initialRateClass = Object.keys(getRateClasses(isTobacco))[0];
@@ -30,16 +32,43 @@ function QuotePageContent() {
   const [rateClass, setRateClass] = useState(initialRateClass);
   const [selectedRiders, setSelectedRiders] = useState<string[]>([]);
 
+  // Debounce timer for DB updates
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const syncToDb = useCallback((updates: Record<string, unknown>) => {
+    if (!quoteId) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      const { error } = await supabase
+        .from('quote_submissions')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', quoteId);
+      if (error) console.error('Error updating quote:', error);
+    }, 500);
+  }, [quoteId]);
+
   const handlePremiumChange = (newPremium: number | null, newCoverage: number, newRateClass: string) => {
     setPremium(newPremium);
     setCoverage(newCoverage);
     setRateClass(newRateClass);
+
+    syncToDb({
+      coverage_amount: newCoverage,
+      rate_class: newRateClass,
+      monthly_premium: newPremium,
+      annual_premium: newPremium !== null ? getAnnualPremium(newPremium) : null,
+    });
   };
 
   const handleRiderToggle = (riderId: string) => {
-    setSelectedRiders((prev) =>
-      prev.includes(riderId) ? prev.filter((r) => r !== riderId) : [...prev, riderId]
-    );
+    setSelectedRiders((prev) => {
+      const updated = prev.includes(riderId)
+        ? prev.filter((r) => r !== riderId)
+        : [...prev, riderId];
+
+      syncToDb({ selected_riders: updated });
+      return updated;
+    });
   };
 
   return (
