@@ -77,4 +77,15 @@ export function getAnnualPremium(monthlyPremium: number): number {
   return Math.round(monthlyPremium * 12 * 100) / 100;
 }
 
+// Accidental Death Benefit Rider cost — linear with coverage, same for tobacco/non-tobacco
+// $2,000 → $0.45/mo, $35,000 → $7.88/mo
+const RIDER_MIN_COST = 0.45;
+const RIDER_MAX_COST = 7.88;
+
+export function calculateRiderCost(coverage: number): number {
+  const clamped = Math.max(MIN_COVERAGE, Math.min(MAX_COVERAGE, coverage));
+  const ratio = (clamped - MIN_COVERAGE) / (MAX_COVERAGE - MIN_COVERAGE);
+  return Math.round((RIDER_MIN_COST + ratio * (RIDER_MAX_COST - RIDER_MIN_COST)) * 100) / 100;
+}
+
 export { MIN_COVERAGE, MAX_COVERAGE, MIN_PREMIUM_INPUT, MAX_PREMIUM_INPUT };

@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useCallback, useRef, Suspense } from 'react';
+import { useState, useCallback, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Typography, Divider, Button, Paper } from '@mui/material';
 import { supabase } from '@/lib/supabase';
 import QuoteBuilder from '@/components/QuoteBuilder';
 import PolicyTotal from '@/components/PolicyTotal';
 import OptionalRiders from '@/components/OptionalRiders';
-import { calculatePremium, getPremiumForRateClass, getRateClasses, getAnnualPremium } from '@/utils/premiumCalculator';
+import { calculatePremium, getPremiumForRateClass, getRateClasses, getAnnualPremium, calculateRiderCost } from '@/utils/premiumCalculator';
 import LoadingScreen from '@/components/LoadingScreen';
-
-const INCLUDED_RIDERS = ['Accelerated Death Benefit Rider for Terminal Illness'];
 
 function QuotePageContent() {
   const router = useRouter();
@@ -32,7 +30,31 @@ function QuotePageContent() {
   const [coverage, setCoverage] = useState(initialCoverage);
   const [rateClass, setRateClass] = useState(initialRateClass);
   const [selectedRiders, setSelectedRiders] = useState<string[]>([]);
+  const [selectedRiderNames, setSelectedRiderNames] = useState<Record<string, string>>({});
+  const [includedRiders, setIncludedRiders] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchRiders() {
+      const { data, error } = await supabase
+        .from('riders')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+
+      if (error) {
+        console.error('Error fetching riders:', error);
+      } else {
+        setIncludedRiders((data || []).filter((r) => r.rider_type === 'included').map((r) => r.name));
+        const nameMap: Record<string, string> = {};
+        (data || []).filter((r) => r.rider_type === 'optional').forEach((r) => {
+          nameMap[r.id] = r.name;
+        });
+        setSelectedRiderNames(nameMap);
+      }
+    }
+    fetchRiders();
+  }, []);
 
   // Debounce timer for DB updates
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -114,6 +136,7 @@ function QuotePageContent() {
               <OptionalRiders
                 selectedRiders={selectedRiders}
                 onRiderToggle={handleRiderToggle}
+                riderCost={calculateRiderCost(coverage)}
               />
             </Box>
           </Box>
@@ -124,7 +147,11 @@ function QuotePageContent() {
               monthlyPremium={premium}
               coverage={coverage}
               rateClass={rateClass}
-              riders={INCLUDED_RIDERS}
+              riders={includedRiders}
+              selectedRidersCost={selectedRiders.map((id) => ({
+                name: selectedRiderNames[id] || 'Rider',
+                cost: calculateRiderCost(coverage),
+              }))}
             />
           </Box>
         </Box>
