@@ -179,6 +179,9 @@ function QuotePageContent() {
           variant="contained"
           onClick={() => {
             setLoading(true);
+            const riderCost = selectedRiders.length > 0 ? calculateRiderCost(coverage) * selectedRiders.length : 0;
+            const totalPremium = premium !== null ? premium + riderCost : null;
+            const riderNames = selectedRiders.map((id) => selectedRiderNames[id] || '').filter(Boolean);
             const params = new URLSearchParams({
               ...(quoteId ? { quoteId } : {}),
               firstName,
@@ -186,7 +189,10 @@ function QuotePageContent() {
               tobacco: isTobacco ? 'yes' : 'no',
               coverage: coverage.toString(),
               rateClass,
-              premium: premium?.toString() || '',
+              premium: totalPremium?.toString() || '',
+              basePremium: premium?.toString() || '',
+              ...(riderNames.length > 0 ? { riders: riderNames.join(',') } : {}),
+              ...(riderCost > 0 ? { riderCost: riderCost.toString() } : {}),
             });
             router.push(`/eligibility?${params.toString()}`);
           }}

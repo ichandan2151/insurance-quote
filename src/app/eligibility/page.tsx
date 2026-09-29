@@ -39,6 +39,9 @@ function EligibilityContent() {
   const coverage = searchParams.get('coverage') || '';
   const rateClass = searchParams.get('rateClass') || '';
   const premium = searchParams.get('premium') || '';
+  const basePremium = searchParams.get('basePremium') || '';
+  const riderNames = searchParams.get('riders') || '';
+  const riderCost = searchParams.get('riderCost') || '';
 
   const handleNext = async () => {
     setLoading(true);
@@ -93,7 +96,9 @@ function EligibilityContent() {
               Applicant: <strong>{firstName} {lastName}</strong>
               {coverage && <> &middot; Coverage: <strong>${parseInt(coverage).toLocaleString()}</strong></>}
               {rateClass && <> &middot; Rate Class: <strong>{rateClass}</strong></>}
-              {premium && <> &middot; Premium: <strong>${parseFloat(premium).toFixed(2)}/mo</strong></>}
+              {basePremium && <> &middot; Base Premium: <strong>${parseFloat(basePremium).toFixed(2)}/mo</strong></>}
+              {riderNames && <> &middot; {riderNames.split(',').join(', ')}: <strong>${parseFloat(riderCost).toFixed(2)}/mo</strong></>}
+              {premium && <> &middot; Total: <strong>${parseFloat(premium).toFixed(2)}/mo</strong></>}
             </Typography>
           </Box>
         )}
