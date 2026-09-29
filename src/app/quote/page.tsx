@@ -146,6 +146,7 @@ function QuotePageContent() {
         </Button>
         <Button
           variant="contained"
+          onClick={() => router.push('/eligibility')}
           sx={{
             backgroundColor: '#1a3c6e',
             textTransform: 'none',
