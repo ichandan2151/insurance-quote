@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Typography, Paper, Divider, Switch, Button } from '@mui/material';
+import LoadingScreen from '@/components/LoadingScreen';
 
 const CRITERIA = [
   'Be a US citizen or permanent resident',
@@ -29,26 +30,28 @@ function EligibilityContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [confirmed, setConfirmed] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Pass through all existing params
   const allParams = searchParams.toString();
 
   return (
+    <>
+    {loading && <LoadingScreen />}
     <Box sx={{ minHeight: '100vh', backgroundColor: '#6BA4E0', py: 3, px: 2 }}>
-      {/* Title */}
-      <Typography
-        sx={{
-          color: '#fff',
-          fontWeight: 300,
-          fontSize: '2.5rem',
-          fontStyle: 'italic',
-          fontFamily: 'Georgia, "Times New Roman", serif',
-          mb: 2.5,
-          ml: { xs: 0, md: 4 },
-        }}
-      >
-        Confirm Eligibility
-      </Typography>
+      {/* Title — aligned with card */}
+      <Box sx={{ maxWidth: 1050, width: '100%', mx: 'auto', mb: 2.5 }}>
+        <Typography
+          sx={{
+            color: '#fff',
+            fontWeight: 300,
+            fontSize: '2.5rem',
+            fontStyle: 'italic',
+            fontFamily: 'Georgia, "Times New Roman", serif',
+          }}
+        >
+          Confirm Eligibility
+        </Typography>
+      </Box>
 
       {/* Main Card */}
       <Paper
@@ -128,7 +131,7 @@ function EligibilityContent() {
         <Button
           variant="contained"
           disabled={!confirmed}
-          onClick={() => router.push('/error-page')}
+          onClick={() => { setLoading(true); router.push('/error-page'); }}
           sx={{
             backgroundColor: '#1a3c6e',
             textTransform: 'none',
@@ -146,6 +149,7 @@ function EligibilityContent() {
         </Button>
       </Box>
     </Box>
+    </>
   );
 }
 

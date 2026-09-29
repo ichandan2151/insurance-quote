@@ -8,6 +8,7 @@ import QuoteBuilder from '@/components/QuoteBuilder';
 import PolicyTotal from '@/components/PolicyTotal';
 import OptionalRiders from '@/components/OptionalRiders';
 import { calculatePremium, getPremiumForRateClass, getRateClasses, getAnnualPremium } from '@/utils/premiumCalculator';
+import LoadingScreen from '@/components/LoadingScreen';
 
 const INCLUDED_RIDERS = ['Accelerated Death Benefit Rider for Terminal Illness'];
 
@@ -31,6 +32,7 @@ function QuotePageContent() {
   const [coverage, setCoverage] = useState(initialCoverage);
   const [rateClass, setRateClass] = useState(initialRateClass);
   const [selectedRiders, setSelectedRiders] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Debounce timer for DB updates
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -72,6 +74,8 @@ function QuotePageContent() {
   };
 
   return (
+    <>
+    {loading && <LoadingScreen />}
     <Box sx={{ minHeight: '100vh', backgroundColor: '#6BA4E0', py: 3, px: 2 }}>
       {/* Quote Title */}
       <Typography
@@ -146,7 +150,7 @@ function QuotePageContent() {
         </Button>
         <Button
           variant="contained"
-          onClick={() => router.push('/eligibility')}
+          onClick={() => { setLoading(true); router.push('/eligibility'); }}
           sx={{
             backgroundColor: '#1a3c6e',
             textTransform: 'none',
@@ -163,6 +167,7 @@ function QuotePageContent() {
         </Button>
       </Box>
     </Box>
+    </>
   );
 }
 

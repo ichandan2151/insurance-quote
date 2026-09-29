@@ -20,6 +20,7 @@ import {
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { isValidUSZipCode } from '@/utils/zipCodeValidator';
 import { getStateFromZip } from '@/utils/zipToState';
+import LoadingScreen from '@/components/LoadingScreen';
 
 const NAME_MAX_LENGTH = 15;
 
@@ -64,6 +65,7 @@ export default function QuoteForm() {
     tobacco: null,
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (field: keyof FormData, value: string | boolean | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -121,6 +123,7 @@ export default function QuoteForm() {
 
   const handleSubmit = async () => {
     if (validate()) {
+      setLoading(true);
       const [month, day, year] = formData.dob.split('/');
       const dobFormatted = `${year}-${month}-${day}`;
 
@@ -161,6 +164,8 @@ export default function QuoteForm() {
   const stateInfo = formData.zipCode.length === 5 ? getStateFromZip(formData.zipCode) : null;
 
   return (
+    <>
+    {loading && <LoadingScreen />}
     <Box
       sx={{
         minHeight: '100vh',
@@ -374,5 +379,6 @@ export default function QuoteForm() {
         </Box>
       </Paper>
     </Box>
+    </>
   );
 }
