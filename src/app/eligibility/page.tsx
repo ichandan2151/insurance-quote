@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Typography, Paper, Divider, Switch, Button } from '@mui/material';
+import { supabase } from '@/lib/supabase';
 import LoadingScreen from '@/components/LoadingScreen';
 
 const CRITERIA = [
@@ -32,7 +33,29 @@ function EligibilityContent() {
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const allParams = searchParams.toString();
+  const quoteId = searchParams.get('quoteId');
+  const firstName = searchParams.get('firstName') || '';
+  const lastName = searchParams.get('lastName') || '';
+  const coverage = searchParams.get('coverage') || '';
+  const rateClass = searchParams.get('rateClass') || '';
+  const premium = searchParams.get('premium') || '';
+
+  const handleNext = async () => {
+    setLoading(true);
+
+    // Update quote status to submitted in Supabase
+    if (quoteId) {
+      await supabase
+        .from('quote_submissions')
+        .update({
+          status: 'submitted',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', quoteId);
+    }
+
+    router.push('/error-page');
+  };
 
   return (
     <>
@@ -58,6 +81,18 @@ function EligibilityContent() {
         elevation={0}
         sx={{ maxWidth: 1050, width: '100%', mx: 'auto', borderRadius: 2, p: { xs: 3, sm: 5 } }}
       >
+        {/* Applicant context banner */}
+        {firstName && (
+          <Box sx={{ mb: 3, p: 2, backgroundColor: '#f0f5fc', borderRadius: 2 }}>
+            <Typography sx={{ fontSize: '0.9rem', color: '#1a3c6e' }}>
+              Applicant: <strong>{firstName} {lastName}</strong>
+              {coverage && <> &middot; Coverage: <strong>${parseInt(coverage).toLocaleString()}</strong></>}
+              {rateClass && <> &middot; Rate Class: <strong>{rateClass}</strong></>}
+              {premium && <> &middot; Premium: <strong>${parseFloat(premium).toFixed(2)}/mo</strong></>}
+            </Typography>
+          </Box>
+        )}
+
         {/* Criteria Section */}
         <Typography sx={{ color: '#1a3c6e', fontWeight: 600, fontSize: '1.05rem', mb: 2 }}>
           Your applicant must meet these 3 criteria to consider applying:
@@ -131,7 +166,7 @@ function EligibilityContent() {
         <Button
           variant="contained"
           disabled={!confirmed}
-          onClick={() => { setLoading(true); router.push('/error-page'); }}
+          onClick={handleNext}
           sx={{
             backgroundColor: '#1a3c6e',
             textTransform: 'none',

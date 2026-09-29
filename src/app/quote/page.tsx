@@ -150,7 +150,19 @@ function QuotePageContent() {
         </Button>
         <Button
           variant="contained"
-          onClick={() => { setLoading(true); router.push('/eligibility'); }}
+          onClick={() => {
+            setLoading(true);
+            const params = new URLSearchParams({
+              ...(quoteId ? { quoteId } : {}),
+              firstName,
+              lastName,
+              tobacco: isTobacco ? 'yes' : 'no',
+              coverage: coverage.toString(),
+              rateClass,
+              premium: premium?.toString() || '',
+            });
+            router.push(`/eligibility?${params.toString()}`);
+          }}
           sx={{
             backgroundColor: '#1a3c6e',
             textTransform: 'none',
